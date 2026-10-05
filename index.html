@@ -14,6 +14,7 @@
     --ink:#F6F2EC; --mute:rgba(246,242,236,.7);
     --glass:rgba(18,22,44,.40); --line:rgba(255,255,255,.18);
     --font:'Jost','Anuphan',system-ui,sans-serif;
+    --bulb-m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'%3E%3Cpath d='M.36,0 H.64 V.035 C.64,.08 1,.1 1,.3 V.84 C1,.96 .82,1 .5,1 C.18,1 0,.96 0,.84 V.3 C0,.1 .36,.08 .36,.035 Z'/%3E%3C/svg%3E");
     --bulb:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'%3E%3Cpath d='M.38,0 H.62 V.05 C.62,.11 1,.15 1,.46 C1,.79 .79,1 .5,1 C.21,1 0,.79 0,.46 C0,.15 .38,.11 .38,.05 Z'/%3E%3C/svg%3E");
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -30,7 +31,7 @@
   .night{position:fixed;inset:0;background:rgba(2,4,12,.82);opacity:0;pointer-events:none;z-index:1;transition:opacity 2.4s ease}
   body.sleep .night{opacity:1}
 
-  main{position:relative;z-index:2;padding:96px 16px 56px}
+  main{position:relative;z-index:2;padding:96px 16px 56px;overflow:clip}
 
   /* ================= the bulb ================= */
   .bulbwrap{position:relative;width:min(100%,480px);margin:0 auto;transform-origin:50% -180px}
@@ -45,7 +46,7 @@
   .socket i{display:block;height:11px;border-radius:6px;background:linear-gradient(to bottom,#4c4c4c,#cfcfcf 45%,#3e3e3e)}
   .socket i:nth-child(odd){margin:0 4px}
 
-  .halo{position:absolute;left:-22%;right:-22%;top:12%;bottom:-6%;z-index:0;pointer-events:none;
+  .halo{position:absolute;left:-4%;right:-4%;top:12%;bottom:0;z-index:0;pointer-events:none;
         background:radial-gradient(closest-side,rgba(255,170,80,.55),transparent 75%);filter:blur(24px);opacity:.12}
   body.lit .halo{animation:flick 1.3s forwards}
   body.sleep .halo{animation:dimHalo 2.4s forwards}
@@ -63,7 +64,8 @@
       radial-gradient(70% 40% at 50% 100%, rgba(255,120,30,.16), transparent 75%)}
   .card::after{content:"";position:absolute;left:11%;top:30%;width:16%;height:32%;pointer-events:none;
     border-left:3px solid rgba(255,255,255,.16);border-radius:50%;transform:rotate(8deg)}
-  body.lit .card::before{animation:flick 1.3s forwards}
+  body.lit .card::before{animation:flick 1.3s forwards, breathe2 4.5s 1.4s ease-in-out infinite}
+  @keyframes breathe2{0%,100%{opacity:1}50%{opacity:.72}}
   body.sleep .card::before{animation:dimGlass 2.4s forwards}
   .card > *{position:relative;z-index:1}
   .outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none;z-index:0!important}
@@ -148,6 +150,18 @@
   @keyframes in{from{opacity:0;transform:translateX(36px) scale(.98)}to{opacity:1;transform:none}}
   @keyframes inBack{from{opacity:0;transform:translateX(-36px) scale(.98)}to{opacity:1;transform:none}}
 
+  .screen.q.active > :not(.emoji){opacity:0;animation:qin .55s calc(var(--n,0) * 80ms + 120ms) cubic-bezier(.2,.9,.3,1.2) forwards}
+  .screen.q.active > :nth-child(2){--n:1}.screen.q.active > :nth-child(3){--n:2}.screen.q.active > :nth-child(4){--n:3}
+  .screen.q.active > :nth-child(5){--n:4}.screen.q.active > :nth-child(6){--n:5}.screen.q.active > :nth-child(7){--n:6}
+  .screen.q.active > :nth-child(n+8){--n:7}
+  .screen.q.active > .emoji{animation:emojiPop .7s cubic-bezier(.3,1.8,.5,1) both, bob 2.6s .7s ease-in-out infinite}
+  .screen.q.active .chip,.screen.q.active .role{opacity:0;animation:qin .45s calc(var(--k,0) * 60ms + 420ms) cubic-bezier(.2,.9,.3,1.2) forwards}
+  .screen.q.active .chip.on,.screen.q.active .role.on{opacity:1;animation:pop .35s}
+  @keyframes qin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes emojiPop{0%{opacity:0;transform:scale(.2) rotate(-25deg)}100%{opacity:1;transform:none}}
+  .bar.just{animation:barPop .75s cubic-bezier(.3,1.8,.5,1)}
+  @keyframes barPop{0%{transform:scaleY(.3);filter:brightness(2.2)}60%{transform:scaleY(1.15)}100%{transform:none;filter:none}}
+  .bar{transform-origin:50% 100%}
   .emoji{font-size:32px;display:inline-block;margin-bottom:6px;animation:bob 2.6s ease-in-out infinite}
   @keyframes bob{50%{transform:translateY(-5px) rotate(4deg)}}
   .kicker{font-size:14px;color:var(--amber);font-weight:500;margin:0 auto 6px;max-width:82%}
@@ -310,18 +324,50 @@
     .btn.primary:hover{transform:translateY(-2px)}
   }
   @media (hover:none){ body{background-attachment:scroll} }
+  /* phones with "Reduce Motion" on: keep the story animations, only calm the endless swaying/floating */
   @media (prefers-reduced-motion:reduce){
-    *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}
+    body:not(.lit) .bulbwrap,body.lit .bulbwrap{animation:none}
+    .emoji,.ember,.done.p6 .capsule{animation:none!important}
+    .done.p6 .fly{animation-iteration-count:1!important}
   }
+  .outline .pm{display:none}
   @media (max-width:430px){
-    main{padding-top:84px}
-    .card{min-height:760px;padding:178px 32px 150px}
-    .kicker{max-width:74%;font-size:13px}
-    .lead{font-size:15px}
-    h1{font-size:28px}
-    h2{font-size:18px}
-    .stairs{width:70%}
+    /* phones: keep the round bulb, centre the content in its belly, scale text with the bulb width */
+    main{padding:14px 8px 12px}
+    .socket{width:28%;gap:2px}
+    .socket i{height:8px}.socket .cap{height:12px}
+    .card{--H:calc(100svh - 96px);min-height:var(--H);display:flex;flex-direction:column;justify-content:center;
+          padding:calc(var(--H) * .19) 9vw calc(var(--H) * .14)}
+    .card::after{top:30%;left:9%}
+    .fwrap,.filament{width:17vw}
+    .fwrap{margin:0 auto 2.4vw}
+    .kicker{font-size:clamp(11.5px,3.3vw,14px);max-width:100%;margin-bottom:1vw}
+    h1{font-size:clamp(21px,7vw,30px)}
+    .lead{font-size:clamp(12.5px,3.5vw,15px);line-height:1.6;margin:2.6vw 0 3.4vw}
+    .lead p + p{margin-top:1.8vw}
+    .note{font-size:clamp(11px,3vw,13px);margin-top:2.4vw}
+    .values{font-size:clamp(10px,2.8vw,12px);gap:3vw;margin-top:2vw}
+    h2{font-size:clamp(15px,4.5vw,19px);line-height:1.4}
+    .hint{font-size:clamp(11.5px,3.2vw,14px);margin-bottom:3vw}
+    .emoji{font-size:clamp(22px,7vw,30px);margin-bottom:0}
+    .stairs{width:66%;height:11vw;margin:0 auto 3vw}
+    .count{font-size:clamp(10.5px,2.9vw,12px);margin:-1.5vw 0 2vw}
+    label.f{font-size:clamp(12px,3.3vw,14px);margin:2.6vw 0 1.4vw}
+    input[type=text],textarea{padding:11px 14px}
+    textarea{min-height:24vw}
+    .nav{width:84%;margin:3vw auto 0}
+    button.btn{font-size:clamp(14px,4vw,16px);padding:12px 16px}
+    .chips{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+    .chips .chip{width:auto;border-radius:16px;padding:2.4vw 2vw;font-size:clamp(12px,3.4vw,14px);line-height:1.35}
+    .roles{grid-template-columns:1fr 1fr;gap:2vw}
+    .role{flex-direction:column;justify-content:center;text-align:center;gap:1vw;padding:2.4vw 1.6vw}
+    .role:last-child{grid-column:span 2}
+    .role small{display:none}.role b{font-size:clamp(11.5px,3.3vw,13.5px);line-height:1.3}
+    .role .ic{width:8.5vw;height:8.5vw;font-size:clamp(16px,4.6vw,20px)}
+    .scene{margin-top:0}
+    .lines p{font-size:clamp(12.5px,3.5vw,15px)}
   }
+
 </style>
 </head>
 <body>
@@ -335,7 +381,8 @@
     <div class="card" id="card">
       <span class="sweep" aria-hidden="true"></span>
       <svg class="outline" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
-        <path vector-effect="non-scaling-stroke" d="M.38,0 H.62 V.05 C.62,.11 1,.15 1,.46 C1,.79 .79,1 .5,1 C.21,1 0,.79 0,.46 C0,.15 .38,.11 .38,.05 Z"/>
+        <path class="pm" vector-effect="non-scaling-stroke" d="M.36,0 H.64 V.035 C.64,.08 1,.1 1,.3 V.84 C1,.96 .82,1 .5,1 C.18,1 0,.96 0,.84 V.3 C0,.1 .36,.08 .36,.035 Z"/>
+        <path class="pd" vector-effect="non-scaling-stroke" d="M.38,0 H.62 V.05 C.62,.11 1,.15 1,.46 C1,.79 .79,1 .5,1 C.21,1 0,.79 0,.46 C0,.15 .38,.11 .38,.05 Z"/>
       </svg>
       <div class="stairs" id="stairs">
         <div class="bars" id="bars"></div>
@@ -518,17 +565,17 @@ function render(){
     } else if (s.type === 'chips'){
       body = `
         <span class="emoji">${s.emoji}</span><p class="kicker">${s.kicker}</p><h2>${s.q}</h2><p class="hint">${s.hint}${s.pick>1?` <span class="picked">(0/${s.pick})</span>`:''}</p>
-        <div class="chips">${s.options.map(o=>`<button type="button" class="chip" aria-pressed="false" data-v="${o}">${o}</button>`).join('')}</div>
+        <div class="chips">${s.options.map((o,oi)=>`<button type="button" class="chip" style="--k:${oi}" aria-pressed="false" data-v="${o}">${o}</button>`).join('')}</div>
         ${navHtml(i,s)}`;
     } else if (s.type === 'roles'){
       body = `
         <span class="emoji">${s.emoji}</span><p class="kicker">${s.kicker}</p><h2>${s.q}</h2><p class="hint">${s.hint}</p>
-        <div class="roles" role="radiogroup">${s.options.map(o=>`<button type="button" class="role" role="radio" aria-checked="false" data-v="${o.v}"><span class="ic">${o.ic}</span><span><b>${o.v}</b><small>${o.d}</small></span></button>`).join('')}</div>
+        <div class="roles" role="radiogroup">${s.options.map((o,oi)=>`<button type="button" class="role" style="--k:${oi}" role="radio" aria-checked="false" data-v="${o.v}"><span class="ic">${o.ic}</span><span><b>${o.v}</b><small>${o.d}</small></span></button>`).join('')}</div>
         ${navHtml(i,s)}`;
     } else if (s.type === 'done'){
       body = closingHtml();
     }
-    return `<section class="screen" data-i="${i}">${body}</section>`;
+    return `<section class="screen${s.type!=='intro'&&s.type!=='done'?' q':''}" data-i="${i}">${body}</section>`;
   }).join('');
 
   $('#bars').innerHTML = Array.from({length:QUESTION_STEPS},(_,k)=>`<div class="bar" style="height:${14 + k*5}px"></div>`).join('');
@@ -642,7 +689,8 @@ function updateStairs(){
   $('#count').hidden = !show;
   if (!show) return;
   const bars = [...document.querySelectorAll('.bar')];
-  bars.forEach((b,k)=>b.classList.toggle('on', k < idx));
+  bars.forEach((b,k)=>{ b.classList.toggle('on', k < idx); b.classList.remove('just'); });
+  if (!document.querySelector('.screen.back.active')) { void bars[idx-1].offsetWidth; bars[idx-1].classList.add('just'); }
   $('#count').textContent = `ไฟติดแล้ว ${idx} จาก ${QUESTION_STEPS} ดวง`;
   requestAnimationFrame(()=>{
     const bar = bars[idx-1], w = $('#walker');
@@ -694,9 +742,7 @@ function startClosing(res){
   requestAnimationFrame(()=>{ cm.style.transition = ''; });
 
   const d = $('#done');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const T = reduce ? {p1:0,p2:0,p3:0,p4:0,p5:0,fly:0,p6:0,p7:0}
-                   : {p1:150,p2:2600,p3:3800,p4:4900,p5:6200,fly:6900,p6:8300,p7:13200};
+  const T = {p1:150,p2:2600,p3:3800,p4:4900,p5:6200,fly:6900,p6:8300,p7:13200};
   ['p1','p2','p3','p4','p5'].forEach(c=>setTimeout(()=>d.classList.add(c), T[c]));
   setTimeout(()=>{ attached = true; placeCapsule(true); }, T.fly);
   setTimeout(()=>d.classList.add('p6'), T.p6);
