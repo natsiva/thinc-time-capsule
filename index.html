@@ -351,8 +351,14 @@
 
 <script>
 const OPEN_LABEL = 'ปลายเทอมนี้'; // วันที่จะกลับมาเปิดแคปซูล แก้ได้ตรงนี้
+// ===== Supabase (ที่เก็บข้อมูลหลัก) =====
+// ใส่ Project URL และ Publishable / anon key จาก Supabase → Project Settings → API Keys
+// ⚠️ ห้ามใส่ secret / service_role key เด็ดขาด
+const SUPABASE_URL = 'https://rzfqcphpylncyawqvkwl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_d2Cs-dI3xqN-8TjlEnR4Xg_LMVI7LH1';
+
 // ลิงก์ Web app ของ Apps Script (ลงท้ายด้วย /exec) ใช้ตอนเว็บอยู่บน Vercel เพื่อส่งคำตอบลง Google Sheet
-const API_URL = '';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyn96zHN9iMBdGIzaLBlZWcDU5lQqOlWuQg1Sp0kuajLzpQFiYwJrXkqX6IeXXzkQfhnQ/exec';
 
 const ROLES = [
   {v:'คนจุดประกายไอเดีย', ic:'💡', d:'คิดอะไรใหม่ๆ ได้ตลอด'},
@@ -704,7 +710,17 @@ function submit(btn){
     btn.disabled = false; btn.textContent = 'ปิดแคปซูล 🔒';
     setErr('ส่งไม่สำเร็จ: ' + (err && err.message ? err.message : 'ลองกดอีกครั้งนะ'));
   };
-  if (window.google && google.script && google.script.run){
+  if (SUPABASE_URL && SUPABASE_KEY){
+    // send to Supabase through the locked-down submit_capsule function
+    fetch(SUPABASE_URL.replace(/\/+$/,'') + '/rest/v1/rpc/submit_capsule', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ payload })
+    })
+      .then(r => r.json().then(j => ({ status:r.status, j })))
+      .then(({status, j}) => j && j.ok ? startClosing(j) : fail(new Error((j && (j.error || j.message)) || ('บันทึกไม่สำเร็จ (' + status + ')'))))
+      .catch(() => fail(new Error('เชื่อมต่อไม่ได้ ลองเช็กอินเทอร์เน็ตแล้วกดอีกครั้งนะ')));
+  } else if (window.google && google.script && google.script.run){
     // served by Apps Script directly
     google.script.run.withSuccessHandler(startClosing).withFailureHandler(fail).submitResponse(payload);
   } else if (API_URL){
